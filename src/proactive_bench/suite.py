@@ -38,11 +38,14 @@ TWO_SIDED_ALERTS = "two_sided_alerts"
 #: looks like a model failure.
 COUNT_FRAMES_PER_CHUNK = 2
 
-# Three on-disk layouts exist and they are not interchangeable.
+# Four on-disk layouts exist and they are not interchangeable.
 #
 # ``annotation`` ``<data_root>/annotations/<subtask>.jsonl`` -- the published set: pure
 #                annotation, no model's messages and no media, so every model assembles its
 #                own prompt from it.  This is what the benchmark is, hence the default.
+# ``test``       ``<data_root>/test/<publication_name>.jsonl`` -- publication-ready test set
+#                with cleaned schema (no internal fields, simplified IDs). File names match
+#                paper terminology rather than internal subtask names.
 # ``delivery``   ``<data_root>/delivery/<subtask>.jsonl`` -- the generator's assembled rows,
 #                still carrying LiveChatOmni's own message list.  Kept resolvable because
 #                the annotation set is built from it and the two must stay comparable.
@@ -50,10 +53,22 @@ COUNT_FRAMES_PER_CHUNK = 2
 #                running against these, so row counts move under your feet; useful for
 #                looking at the newest rows, wrong for a number anyone will quote.
 ANNOTATION = "annotation"
+TEST = "test"
 DELIVERY = "delivery"
 GENERATION = "generation"
-LAYOUTS: Tuple[str, ...] = (ANNOTATION, DELIVERY, GENERATION)
+LAYOUTS: Tuple[str, ...] = (ANNOTATION, TEST, DELIVERY, GENERATION)
 DEFAULT_LAYOUT = ANNOTATION
+
+# Mapping from internal subtask names to publication-ready file names (for TEST layout)
+# Matches paper terminology: ES, OR, WR, AA, SS, DC
+SUBTASK_TO_PUBLICATION_NAME = {
+    "respond_only_at_first_evidence": "event_sensitivity",      # ES
+    "respond_at_onset": "onset_response",                      # OR
+    "respond_within_window": "window_response",                # WR
+    "respond_to_anomaly": "anomaly_alert",                     # AA
+    "respond_after_long_silence": "sustained_silence",         # SS
+    "count_every_occurrence": "duplicate_counting",            # DC
+}
 
 DEFAULT_ANNOTATION_ROOT = os.environ.get(
     "PROACTIVE_BENCH_DATA_ROOT",
@@ -69,10 +84,12 @@ DEFAULT_DATA_ROOT = DEFAULT_ANNOTATION_ROOT
 def default_root_for(layout: str = DEFAULT_LAYOUT) -> str:
     """The root a layout is normally found under.
 
-    The two layouts live in different directories, so a ``--layout delivery`` that kept the
+    The layouts live in separate directories, so a ``--layout delivery`` that kept the
     annotation root would resolve to nothing and read as "the set is missing".
     """
-    return DEFAULT_ANNOTATION_ROOT if layout == ANNOTATION else DEFAULT_DELIVERY_ROOT
+    if layout in (ANNOTATION, TEST):
+        return DEFAULT_ANNOTATION_ROOT
+    return DEFAULT_DELIVERY_ROOT
 
 
 @dataclass(frozen=True)
@@ -289,6 +306,10 @@ def input_path(
     """Where one subtask's rows live under the requested layout."""
     if layout == ANNOTATION:
         return os.path.join(data_root, "annotations", f"{subtask}.jsonl")
+    if layout == TEST:
+        # Map internal subtask name to publication file name
+        pub_name = SUBTASK_TO_PUBLICATION_NAME.get(subtask, subtask)
+        return os.path.join(data_root, "test", f"{pub_name}.jsonl")
     if layout == DELIVERY:
         return os.path.join(data_root, DELIVERY, f"{subtask}.jsonl")
     if layout == GENERATION:
