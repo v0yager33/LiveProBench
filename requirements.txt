@@ -1,0 +1,13 @@
+# Core harness. The HTTP backends need nothing else.
+openai>=1.30
+tqdm>=4.66
+
+# Only for reading the *.parquet mirrors of the JSONL inputs.
+pandas>=2.0
+pyarrow>=14.0
+
+# Only for the local-checkpoint backends (moss_vl, m4). Both baselines pin their own
+# transformers/flash-attn versions, so install them inside that baseline's own env and
+# keep this file for the harness itself.
+# torch
+# transformers

@@ -1,0 +1,40 @@
+ProactiveBench
+Copyright 2026 Alibaba Group Holding Limited
+
+Licensed under the Apache License, Version 2.0. See the LICENSE file for the
+full terms.
+
+--------------------------------------------------------------------------------
+Third-party prompt strings, reproduced verbatim
+--------------------------------------------------------------------------------
+
+The adapters under src/proactive_bench/models/ reproduce short strings -- system
+prompts, silence tokens, chunk and query wrappers -- byte for byte from each
+baseline's own repository. This is deliberate rather than incidental, and it is
+the condition under which the comparison is fair: a checkpoint asked in another
+model's words is being measured on instruction-following instead of the
+behaviour it was trained for. Those strings remain the work of their authors,
+who are credited here and in the adapter that carries them.
+
+  aura.py       AURA. Prompt strings taken from AURA's own OmniMMI PA
+                evaluation rather than from the training corpus.
+
+  joyai.py      JoyAI-VL-Interaction. Prompt strings taken from its repository.
+
+  m4.py         M4, a LongVA / LLaVA-NeXT derivative. The opening sentence of
+                its prompt is taken from its repository, and the checkpoint is
+                loaded through that repository's own `intersuit` builder rather
+                than through AutoModel.
+
+  moss_vl.py    MOSS-VL-Realtime. Prompt strings and the native `<|silence|>`
+                token are taken from its repository; the checkpoint's own
+                modeling and processing code is loaded via trust_remote_code.
+
+  roma.py       ROMA. The `default_system` of its `streaming_mix` template,
+                copied byte for byte from src/llamafactory/data/template.py in
+                ROMA's tree, down to the continuation indent. That template file
+                derives from LLaMA-Factory, which is licensed Apache-2.0.
+
+No model weights, checkpoints, or dataset media are distributed with this
+repository. Each baseline is obtained from, and remains governed by, its own
+upstream project's licence and terms of use.

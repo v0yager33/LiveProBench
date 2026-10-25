@@ -1,0 +1,34 @@
+__pycache__/
+*.py[cod]
+
+# Run outputs. Predictions are large and reproducible from the inputs plus run.json;
+# keep the ones worth citing somewhere durable instead of in git.
+results/
+
+# Derived frames and audio tracks. Regenerate with scripts/prepare_media.sh.
+media_cache/
+
+# Scratch space and run logs. Nothing here is an input to anything that is published.
+tmp/
+logs/
+*.log
+
+# Held back from the first push rather than abandoned: the docs the README links to, and the
+# row generator. Delete these two lines to publish them.
+docs/
+data_generation/
+
+# Local launchers, kept out because nobody else can run them: our checkpoint paths, our port
+# allocation, and a smoke sample that lives outside this repo. The scripts that are published
+# are the ones that only ever call src/ with repo-relative paths.
+scripts/build_subtasks.sh
+scripts/run_ours.sh
+scripts/serve_ours.sh
+scripts/serve_baseline.sh
+scripts/smoke.sh
+
+# Everything under tools/ is ours rather than a user's: viewers for reading our own rows while
+# building them, the steps that produce and police the set, and internal invariant checks that
+# only mean something to whoever maintains the adapters. None of it is needed to run the
+# benchmark, so the published tree is the harness and the launchers that travel.
+tools/
