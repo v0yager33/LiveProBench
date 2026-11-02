@@ -16,6 +16,8 @@ Video preprocessing requires Python 3.7+, `ffmpeg`, and `ffprobe`. Download all 
 
 ## Evaluation
 
+The default benchmark evaluation protocol is **1 fps**: one full-resolution frame per 1-second chunk (`--frames-per-chunk 1 --frame-max-side 0`). Use this configuration for standard benchmark results. Other sampling rates are non-default experiments and must be reported separately.
+
 Install dependencies and run from this code repository with a compatible OpenAI-style model endpoint:
 
 ```bash
@@ -28,8 +30,9 @@ python3 src/run_eval.py \
   --layout test \
   --data-root /path/to/downloaded/LiveProBench \
   --media-root /path/to/downloaded/LiveProBench/video_chunks \
-  --frames-per-chunk 2 \
+  --frames-per-chunk 1 \
+  --frame-max-side 0 \
   --workers 4
 ```
 
-`--data-root` is the downloaded dataset directory, not this code repository. The evaluator accepts the public `test/` schema and the generated `video_chunks/` layout. This layout supplies middle/last frames at full resolution; use `--frames-per-chunk 1` or `2` and `--frame-max-side 0`. Model endpoints must be able to access these local media files. For other backends and options, run `python3 src/run_eval.py --help`.
+`--data-root` is the downloaded dataset directory, not this code repository. The evaluator accepts the public `test/` schema and the generated `video_chunks/` layout, reading one middle frame per chunk under the default 1 fps protocol. Model endpoints must be able to access these local media files. For other backends and options, run `python3 src/run_eval.py --help`.
