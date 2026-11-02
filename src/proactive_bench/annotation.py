@@ -35,12 +35,17 @@ from .suite import (
     LAST_TURN,
     RUNNING_COUNT,
     SUBTASKS,
+    SUBTASK_TO_PUBLICATION_NAME,
     TWO_SIDED_ALERTS,
     WINDOW,
     metric_name,
 )
 
 SCHEMA = "proactive_bench_annotation_v2"
+PUBLICATION_TO_SUBTASK = {
+    public_name: internal_name
+    for internal_name, public_name in SUBTASK_TO_PUBLICATION_NAME.items()
+}
 
 #: The keys a published ``annotation`` block keeps, and the only ones anything reads: ``judge``
 #: takes ``instruction`` as the request a reply is checked against, and the rest are the fallback
@@ -364,6 +369,17 @@ def from_row(row: dict) -> Annotation:
     """
     row = plain(row)
     schema = str(row.get("schema") or "")
+    public_subtask = PUBLICATION_TO_SUBTASK.get(str(row.get("subtask") or ""))
+    if not schema and public_subtask and row.get("id"):
+        # 公开 test/ 省略内部字段；仅规范化身份与任务名，不改动监督内容。
+        dataset = str((row.get("video") or {}).get("dataset") or "")
+        row = dict(
+            row,
+            schema=SCHEMA,
+            sample_id=f"{public_subtask}:{dataset}:{row['id']}",
+            subtask=public_subtask,
+        )
+        schema = SCHEMA
     if schema != SCHEMA:
         raise AnnotationError(
             f"row schema is {schema!r}, expected {SCHEMA!r}; point --layout at the set this "

@@ -54,7 +54,7 @@ Factory = Callable[[ModelOptions], ProactiveModel]
 
 
 def _LiveFlow_omni(options: ModelOptions) -> ProactiveModel:
-    from .LiveFlow_omni import (
+    from .livechat_omni import (
         DEFAULT_BASE_URL,
         DEFAULT_FPS,
         DEFAULT_LONGEST_EDGE,
@@ -178,6 +178,9 @@ LOCAL_BACKENDS = frozenset({"moss_vl", "m4", "roma"})
 def canonical_name(name: str) -> str:
     key = str(name).strip().replace("-", "_").lower()
     key = ALIASES.get(key, key)
+    # 保留注册表展示名，同时允许大小写不敏感的直接模型名。
+    registered_names = {registered.lower(): registered for registered in REGISTRY}
+    key = registered_names.get(key.lower(), key)
     if key not in REGISTRY:
         raise ModelError(
             f"unknown model {name!r}; available: {', '.join(sorted(REGISTRY))}"

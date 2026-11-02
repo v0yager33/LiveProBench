@@ -55,7 +55,13 @@ __all__ = [
 
 
 def default_media_root(data_root: str) -> str:
-    return os.path.join(data_root, MEDIA_DIRNAME)
+    legacy = os.path.join(data_root, MEDIA_DIRNAME)
+    published = os.path.join(data_root, "video_chunks")
+    if not os.path.isdir(legacy) and os.path.isfile(
+        os.path.join(published, "checksums", "frames.jsonl")
+    ):
+        return published
+    return legacy
 
 
 @dataclass(frozen=True)
@@ -127,6 +133,22 @@ class ChunkMedia:
         self.settings = settings or FrameSettings()
         self.layout = MediaLayout(root)
         self.roots = VideoRoots(video_root)
+        self.published_chunks = os.path.isfile(
+            os.path.join(root, "checksums", "frames.jsonl")
+        )
+        if self.published_chunks and (
+            self.settings.frames_per_chunk not in (1, 2) or self.settings.max_side != 0
+        ):
+            raise MediaError(
+                "video_chunks/ provides one or two full-resolution frames per chunk; "
+                "use --frames-per-chunk 1 or 2 and --frame-max-side 0, or generate a "
+                "custom media/ tree with src/extract_media.py"
+            )
+        if self.published_chunks and derive_missing:
+            raise MediaError(
+                "Regenerate missing video_chunks/ files with make_video_chunks.py "
+                "--annotations test; --derive-missing is only supported for media/ trees"
+            )
         self.derive_missing = derive_missing
         self._audio_index: Optional[Dict[Tuple[str, str, int], bool]] = None
 
@@ -137,6 +159,13 @@ class ChunkMedia:
     # -- paths -----------------------------------------------------------------------
 
     def frame_paths(self, video: Video, chunk: Chunk) -> List[str]:
+        if self.published_chunks:
+            directory = os.path.join(
+                self.root, "frames", video.dataset, video.video_id,
+                f"chunk_{chunk.source_chunk:04d}",
+            )
+            return [os.path.join(directory, f"frame_{index:02d}.jpg")
+                    for index in range(self.settings.frames_per_chunk)]
         return [
             self.layout.frame_path(
                 self.settings, video.dataset, video.video_id, chunk.source_chunk, index
@@ -145,6 +174,11 @@ class ChunkMedia:
         ]
 
     def audio_path(self, video: Video, chunk: Chunk) -> str:
+        if self.published_chunks:
+            return os.path.join(
+                self.root, "audios", video.dataset, video.video_id,
+                f"chunk_{chunk.source_chunk:04d}", "audio.wav",
+            )
         return self.layout.audio_path(video.dataset, video.video_id, chunk.source_chunk)
 
     # -- the published audio index -------------------------------------------------
@@ -160,7 +194,8 @@ class ChunkMedia:
         if self._audio_index is not None:
             return self._audio_index
         index: Dict[Tuple[str, str, int], bool] = {}
-        path = self.layout.checksum_path("audio")
+        path = (os.path.join(self.root, "checksums", "audios.jsonl")
+                if self.published_chunks else self.layout.checksum_path("audio"))
         if os.path.isfile(path):
             with open(path, encoding="utf-8") as handle:
                 for line in handle:
@@ -283,7 +318,8 @@ class ChunkMedia:
     def describe(self) -> Dict[str, object]:
         return {
             "root": self.layout.root,
-            "frames": self.settings.tag,
+            "frames": ("middle_last" if self.settings.frames_per_chunk == 2 else "middle")
+                      if self.published_chunks else self.settings.tag,
             "frames_per_chunk": self.settings.frames_per_chunk,
             "derive_missing": self.derive_missing,
         }
