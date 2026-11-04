@@ -32,7 +32,7 @@ Its six subtasks vary **trigger ambiguity** and **timing tolerance**:
 | **Event Sensitivity (ES)** | Respond to the first evidence of an event while remaining silent beforehand. |
 | **Onset Response (OR)** | Respond promptly at the onset of the requested event. |
 | **Window Response (WR)** | Respond within the annotated time window. |
-| **Anomaly Alert (AA)** | Detect and report an anomaly within its response window. |
+| **Anomaly Alert (AA)** | Respond to semantically fuzzy terms like "anomaly" within the window. |
 | **Sustained Silence (SS)** | Remain silent through a long prefix until the requested event occurs. |
 | **Duplicate Counting (DC)** | Count each occurrence without omissions or duplicate reports. |
 
